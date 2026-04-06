@@ -1,13 +1,13 @@
 from player.base_player import BasePlayer
 from settings import (
     PLAYER_START_X,
-    TEENAGER_PLAYER_RUN1_IMAGE,
-    TEENAGER_PLAYER_RUN2_IMAGE,
-    TEENAGER_PLAYER_JUMP_IMAGE,
+    YOUNG_ADULT_PLAYER_RUN1_IMAGE,
+    YOUNG_ADULT_PLAYER_RUN2_IMAGE,
+    YOUNG_ADULT_PLAYER_JUMP_IMAGE,
 )
 
 
-class TeenagerPlayer(BasePlayer):
+class YoungAdultPlayer(BasePlayer):
     DISPLAY_WIDTH = 250
     DISPLAY_HEIGHT = 250
     JUMP_STRENGTH = -13.5
@@ -16,7 +16,7 @@ class TeenagerPlayer(BasePlayer):
     def __init__(self):
         super().__init__(PLAYER_START_X)
         self._setup_sprites(
-            TEENAGER_PLAYER_RUN1_IMAGE,
-            TEENAGER_PLAYER_RUN2_IMAGE,
-            TEENAGER_PLAYER_JUMP_IMAGE,
+            YOUNG_ADULT_PLAYER_RUN1_IMAGE,
+            YOUNG_ADULT_PLAYER_RUN2_IMAGE,
+            YOUNG_ADULT_PLAYER_JUMP_IMAGE,
         )

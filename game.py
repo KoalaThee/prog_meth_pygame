@@ -1,7 +1,6 @@
 import sys
 import pygame
 
-from levels.teenager_level import TeenagerLevel
 from settings import WINDOW_WIDTH, WINDOW_HEIGHT, FPS, WINDOW_TITLE
 
 
@@ -14,20 +13,33 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
 
-        self.current_level = TeenagerLevel(self.screen)
+        # Import after pygame.init() so image loading works immediately
+        from scene_manager import SceneManager
+        from levels.baby_level import BabyLevel
+        from levels.toddler_level import ToddlerLevel
+        from levels.teenager_level import TeenagerLevel
+        from levels.young_adult_level import YoungAdultLevel
+
+        all_states = []
+        for LevelClass in [BabyLevel, ToddlerLevel, TeenagerLevel, YoungAdultLevel]:
+            all_states.extend(LevelClass.get_scene_states())
+
+        self.scene_manager = SceneManager(self.screen, all_states)
 
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
             else:
-                self.current_level.handle_event(event)
+                self.scene_manager.handle_event(event)
 
     def update(self):
-        self.current_level.update()
+        self.scene_manager.update()
+        if self.scene_manager.is_done():
+            self.running = False
 
     def draw(self):
-        self.current_level.draw()
+        self.scene_manager.draw()
         pygame.display.flip()
 
     def run(self):

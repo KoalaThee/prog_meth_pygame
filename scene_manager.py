@@ -1,9 +1,10 @@
 from __future__ import annotations
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import pygame
 
-from settings import WINDOW_WIDTH, WINDOW_HEIGHT
+from config import WINDOW_WIDTH, WINDOW_HEIGHT
 
 
 # ---------------------------------------------------------------------------
@@ -27,13 +28,16 @@ class SceneState:
     image_paths: list[str]
     passes: int
     speed: float
-    player_class: type | None = None
+    player_class: Callable | None = None
     terminal: bool = False
 
 
 # ---------------------------------------------------------------------------
 # SceneManager — single continuous scroller across all states
 # ---------------------------------------------------------------------------
+
+PRELOAD_AHEAD = 3  # how many passes ahead to load before they're visible
+
 
 class SceneManager:
     """
@@ -44,6 +48,9 @@ class SceneManager:
     state starts at).  The player is swapped automatically when a state with
     a non-None player_class is entered.
 
+    Images are lazy-loaded: each surface is loaded only when it falls within
+    PRELOAD_AHEAD passes of the current position.
+
     Query `current_state.name` at any time to know the active state.
     """
 
@@ -52,20 +59,20 @@ class SceneManager:
         self.states = states
 
         # ---- build flat sequence ----------------------------------------
-        self.surfs: list[pygame.Surface] = []   # one Surface per pass
-        self.pass_speeds: list[float] = []       # one speed per pass
-        self.milestones: dict[int, SceneState] = {}  # pass_idx → SceneState
+        self.surf_paths: list[str] = []               # file path per pass
+        self.surfs: list[pygame.Surface | None] = []  # loaded surface or None
+        self.pass_speeds: list[float] = []
+        self.milestones: dict[int, SceneState] = {}   # pass_idx → SceneState
 
         global_pass = 0
         for state in states:
             if state.passes == 0:
-                continue  # e.g. toddler has no transition images
+                continue
 
-            img_surfs = [self._load_bg(p) for p in state.image_paths]
             self.milestones[global_pass] = state
-
             for j in range(state.passes):
-                self.surfs.append(img_surfs[j % len(img_surfs)])  # cycles if needed
+                self.surf_paths.append(state.image_paths[j % len(state.image_paths)])
+                self.surfs.append(None)
                 self.pass_speeds.append(state.speed)
 
             global_pass += state.passes
@@ -86,6 +93,9 @@ class SceneManager:
         if first:
             self._activate_player(first)
 
+        # Preload the opening passes before the loop starts
+        self._preload_ahead(0)
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
@@ -94,6 +104,17 @@ class SceneManager:
     def _load_bg(path: str) -> pygame.Surface:
         img = pygame.image.load(path).convert()
         return pygame.transform.smoothscale(img, (WINDOW_WIDTH, WINDOW_HEIGHT))
+
+    def _preload_ahead(self, current_pass: int):
+        # Load surfaces that are coming up
+        end = min(current_pass + PRELOAD_AHEAD + 1, self.total_passes)
+        for i in range(current_pass, end):
+            if self.surfs[i] is None:
+                self.surfs[i] = self._load_bg(self.surf_paths[i])
+
+        # Evict surfaces that have already scrolled off screen
+        if current_pass > 0:
+            self.surfs[current_pass - 1] = None
 
     def _activate_player(self, state: SceneState):
         self.player = state.player_class()
@@ -140,6 +161,8 @@ class SceneManager:
         if not self._done and new_pass >= self.total_passes:
             self._done = True
 
+        self._preload_ahead(new_pass)
+
         if self.player:
             keys = pygame.key.get_pressed()
             self.player.update(keys)
@@ -154,8 +177,11 @@ class SceneManager:
             pass_idx = current_pass + slot
             if pass_idx >= self.total_passes:
                 break  # don't wrap after the last image
+            surf = self.surfs[pass_idx]
+            if surf is None:
+                continue
             x = int(leading_x) + slot * WINDOW_WIDTH
             if x < WINDOW_WIDTH:
-                self.screen.blit(self.surfs[pass_idx], (x, 0))
+                self.screen.blit(surf, (x, 0))
 
         self.all_sprites.draw(self.screen)

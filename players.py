@@ -43,12 +43,6 @@ class Player(pygame.sprite.Sprite):
         self.animation_tick = 0
         self.current_run_frame = 0
 
-        self.health = 0
-        self.happiness = 0
-        self.social = 0
-        self.intelligence = 0
-        self.arts = 0
-
         self._setup_sprites(run1, run2, jump_img)
 
     def _load_and_scale(self, path: str) -> pygame.Surface:

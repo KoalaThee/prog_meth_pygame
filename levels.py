@@ -70,24 +70,41 @@ def all_level_states():
     states = []
     states += get_level_states(
         "baby",
-        speed=2,
+        speed=4,
         normal_images=BABY_BACKGROUND_NORMAL_IMAGES,
-        normal_passes=2,
+        normal_passes=4,
         normal_player=BabyPlayer,
         transition_images=BABY_BACKGROUND_TRANSITION_IMAGES,
         next_player=ToddlerPlayer,
         item_stage_after_player_swap="toddler",
     )
-    states += get_level_states("toddler",     speed=3, normal_images=TODDLER_BACKGROUND_NORMAL_IMAGES,     normal_passes=2, normal_player=ToddlerPlayer,     transition_images=TODDLER_BACKGROUND_TRANSITION_IMAGES)
+    states += get_level_states(
+        "toddler",
+        speed=4.5,
+        normal_images=TODDLER_BACKGROUND_NORMAL_IMAGES,
+        normal_passes=4,
+        normal_player=ToddlerPlayer,
+        transition_images=TODDLER_BACKGROUND_TRANSITION_IMAGES,
+        next_player=TeenagerPlayer,
+        item_stage_after_player_swap="teenager",
+    )
     states += get_level_states(
         "teenager",
-        speed=4,
+        speed=5,
         normal_images=TEENAGER_BACKGROUND_NORMAL_IMAGES,
-        normal_passes=3,
+        normal_passes=6,
         normal_player=TeenagerPlayer,
         transition_images=TEENAGER_BACKGROUND_TRANSITION_IMAGES,
         next_player=YoungAdultPlayer,
         item_stage_after_player_swap="young_adult",
     )
-    states += get_level_states("young_adult", speed=5, normal_images=YOUNG_ADULT_BACKGROUND_NORMAL_IMAGES, normal_passes=3, normal_player=YoungAdultPlayer, transition_images=YOUNG_ADULT_BACKGROUND_TRANSITION_IMAGES, terminal_image=ENDING_IMAGE)
+    states += get_level_states(
+        "young_adult",
+        speed=5.5,
+        normal_images=YOUNG_ADULT_BACKGROUND_NORMAL_IMAGES,
+        normal_passes=6,
+        normal_player=YoungAdultPlayer,
+        transition_images=YOUNG_ADULT_BACKGROUND_TRANSITION_IMAGES,
+        terminal_image=ENDING_IMAGE,
+    )
     return states

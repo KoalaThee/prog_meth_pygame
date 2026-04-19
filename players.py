@@ -9,6 +9,20 @@ from config import (
 )
 
 
+# Module-level cache
+_PLAYER_IMAGE_CACHE: dict[tuple[str, int, int], pygame.Surface] = {}
+
+
+def _get_player_image(path: str, width: int, height: int) -> pygame.Surface:
+    key = (path, width, height)
+    surf = _PLAYER_IMAGE_CACHE.get(key)
+    if surf is None:
+        img = pygame.image.load(path).convert_alpha()
+        surf = pygame.transform.smoothscale(img, (width, height))
+        _PLAYER_IMAGE_CACHE[key] = surf
+    return surf
+
+
 class Player(pygame.sprite.Sprite):
     def __init__(
         self,
@@ -47,14 +61,11 @@ class Player(pygame.sprite.Sprite):
 
         self._setup_sprites(run1, run2, jump_img)
 
-    def _load_and_scale(self, path: str) -> pygame.Surface:
-        img = pygame.image.load(path).convert_alpha()
-        return pygame.transform.smoothscale(img, (self.DISPLAY_WIDTH, self.DISPLAY_HEIGHT))
-
     def _setup_sprites(self, run1_path: str, run2_path: str, jump_path: str):
-        self.run1_image = self._load_and_scale(run1_path)
-        self.run2_image = self._load_and_scale(run2_path)
-        self.jump_image = self._load_and_scale(jump_path)
+        w, h = int(self.DISPLAY_WIDTH), int(self.DISPLAY_HEIGHT)
+        self.run1_image = _get_player_image(run1_path, w, h)
+        self.run2_image = _get_player_image(run2_path, w, h)
+        self.jump_image = _get_player_image(jump_path, w, h)
 
         self.image = self.run1_image
         self.rect = self.image.get_rect()

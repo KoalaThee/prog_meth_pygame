@@ -8,6 +8,7 @@ WINDOW_TITLE = "Life is a Game"
 START_SCREEN_IMAGE = "assets/images/start_screen.png"
 PAUSE_SCREEN_IMAGE = "assets/images/pause_screen.png"
 OVERLAY_SCREEN_IMAGE = "assets/images/overlay_screen.png"
+GAME_OVER_SCREEN_IMAGE = "assets/images/game over_screen.png"
 
 # Colors
 WHITE = (255, 255, 255)

@@ -1,11 +1,25 @@
 import pygame
 
-from config import WINDOW_WIDTH, WINDOW_HEIGHT, OVERLAY_SCREEN_IMAGE
+from config import (
+    WINDOW_WIDTH,
+    WINDOW_HEIGHT,
+    OVERLAY_SCREEN_IMAGE,
+    STAT_MAX_HEALTH,
+    STAT_MAX_HAPPINESS,
+    STAT_MAX_INTELLIGENCE,
+    STAT_MAX_ARTS,
+)
 from game_state import GameState
 
 
+def _ratio(value: int, max_val: int) -> float:
+    if max_val <= 0:
+        return 0.0
+    return max(0.0, min(1.0, value / max_val))
+
+
 class StatsOverlay:
-    """Full-window overlay art (during play), then HUD: four stat bars + circle."""
+    """Overlay art + four stat bars (health, happiness, intelligence, arts) + social number in circle."""
 
     BAR_W = 120
     BAR_H = 20
@@ -14,10 +28,14 @@ class StatsOverlay:
     LEFT = 35
     CIRCLE_R = 18
 
+    BAR_BG = (220, 220, 220)
+    OUTLINE = (40, 40, 40)
+
     def __init__(self, game_state: GameState):
         self.game_state = game_state
         self._overlay: pygame.Surface | None = None
         self._load_overlay()
+        self._font = pygame.font.Font(None, 18)
 
     def _load_overlay(self) -> None:
         try:
@@ -26,25 +44,50 @@ class StatsOverlay:
         except (pygame.error, FileNotFoundError, OSError):
             self._overlay = None
 
+    def _draw_fill_bar(
+        self,
+        surface: pygame.Surface,
+        x: int,
+        y: int,
+        value: int,
+        max_val: int,
+        fill_color: tuple[int, int, int],
+    ) -> None:
+        bg_rect = pygame.Rect(x, y, self.BAR_W, self.BAR_H)
+        pygame.draw.rect(surface, self.BAR_BG, bg_rect, border_radius=3)
+
+        rw = int(self.BAR_W * _ratio(value, max_val))
+        if rw > 0:
+            fill_rect = pygame.Rect(x, y, rw, self.BAR_H)
+            pygame.draw.rect(surface, fill_color, fill_rect, border_radius=3)
+
+        pygame.draw.rect(surface, self.OUTLINE, bg_rect, width=1, border_radius=3)
+
     def draw(self, surface: pygame.Surface) -> None:
         if self._overlay is not None:
             surface.blit(self._overlay, (0, 0))
 
+        gs = self.game_state
         x = self.LEFT
         y = self.TOP
-        colors = (
-            (200, 80, 80),
-            (80, 180, 80),
-            (80, 120, 200),
-            (200, 160, 60),
+
+        bars = (
+            (gs.health, STAT_MAX_HEALTH, (200, 80, 80)),
+            (gs.happiness, STAT_MAX_HAPPINESS, (80, 180, 80)),
+            (gs.intelligence, STAT_MAX_INTELLIGENCE, (80, 120, 200)),
+            (gs.arts, STAT_MAX_ARTS, (170, 126, 52) ),
         )
-        for i in range(4):
-            rect = pygame.Rect(x, y, self.BAR_W, self.BAR_H)
-            pygame.draw.rect(surface, colors[i], rect, border_radius=3)
-            pygame.draw.rect(surface, (40, 40, 40), rect, width=1, border_radius=3)
+        for value, vmax, color in bars:
+            self._draw_fill_bar(surface, x, y, value, vmax, color)
             x += self.BAR_W + self.GAP
 
         cx = WINDOW_WIDTH - self.CIRCLE_R - self.LEFT
         cy = y + self.BAR_H // 2
-        pygame.draw.circle(surface, (180, 180, 220), (cx, cy), self.CIRCLE_R)
+
+        pygame.draw.circle(surface, (226, 214, 188) , (cx, cy), self.CIRCLE_R)
         pygame.draw.circle(surface, (60, 60, 80), (cx, cy), self.CIRCLE_R, width=2)
+
+        text = str(int(gs.social))
+        text_surf = self._font.render(text, True, (30, 30, 40))
+        text_rect = text_surf.get_rect(center=(cx, cy))
+        surface.blit(text_surf, text_rect)

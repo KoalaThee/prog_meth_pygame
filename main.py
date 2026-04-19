@@ -14,6 +14,7 @@ class GameMode(Enum):
     TITLE = auto()
     PLAYING = auto()
     PAUSED = auto()
+    COMPLETE = auto()
 
 
 class Game:
@@ -32,7 +33,7 @@ class Game:
         self.pause_screen = PauseScreen(self.screen)
         self.stats_overlay = StatsOverlay(self.game_state)
 
-        self.scene_manager = SceneManager(self.screen, all_level_states())
+        self.scene_manager = SceneManager(self.screen, all_level_states(), self.game_state)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -46,6 +47,9 @@ class Game:
             elif self.mode is GameMode.PAUSED:
                 if self.pause_screen.handle_event(event):
                     self.mode = GameMode.PLAYING
+            elif self.mode is GameMode.COMPLETE:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    self.running = False
             else:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     self.mode = GameMode.PAUSED
@@ -57,7 +61,7 @@ class Game:
             return
         self.scene_manager.update()
         if self.scene_manager.is_done():
-            self.running = False
+            self.mode = GameMode.COMPLETE
 
     def draw(self):
         if self.mode is GameMode.TITLE:

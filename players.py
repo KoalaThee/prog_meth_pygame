@@ -21,9 +21,11 @@ class Player(pygame.sprite.Sprite):
         run1: str,
         run2: str,
         jump_img: str,
+        role: str = "",
     ):
         super().__init__()
 
+        self.role = role
         self.DISPLAY_WIDTH = width
         self.DISPLAY_HEIGHT = height
         self.JUMP_STRENGTH = jump_strength
@@ -104,17 +106,21 @@ class Player(pygame.sprite.Sprite):
 
 
 def BabyPlayer():
-    return Player(PLAYER_START_X, width=100, height=100, jump_strength=-13.5,
-                  run1=BABY_PLAYER_RUN1_IMAGE, run2=BABY_PLAYER_RUN2_IMAGE, jump_img=BABY_PLAYER_JUMP_IMAGE)
+    return Player(PLAYER_START_X, width=100, height=65.84, jump_strength=-13.5,
+                  run1=BABY_PLAYER_RUN1_IMAGE, run2=BABY_PLAYER_RUN2_IMAGE, jump_img=BABY_PLAYER_JUMP_IMAGE,
+                  role="baby")
 
 def ToddlerPlayer():
-    return Player(PLAYER_START_X, width=200, height=200, jump_strength=-13.5,
-                  run1=TODDLER_PLAYER_RUN1_IMAGE, run2=TODDLER_PLAYER_RUN2_IMAGE, jump_img=TODDLER_PLAYER_JUMP_IMAGE)
+    return Player(PLAYER_START_X, width=156.60, height=200, jump_strength=-13.5,
+                  run1=TODDLER_PLAYER_RUN1_IMAGE, run2=TODDLER_PLAYER_RUN2_IMAGE, jump_img=TODDLER_PLAYER_JUMP_IMAGE,
+                  role="toddler")
 
 def TeenagerPlayer():
-    return Player(PLAYER_START_X, width=250, height=250, jump_strength=-13.5,
-                  run1=TEENAGER_PLAYER_RUN1_IMAGE, run2=TEENAGER_PLAYER_RUN2_IMAGE, jump_img=TEENAGER_PLAYER_JUMP_IMAGE)
+    return Player(PLAYER_START_X, width=186.66, height=250, jump_strength=-13.5,
+                  run1=TEENAGER_PLAYER_RUN1_IMAGE, run2=TEENAGER_PLAYER_RUN2_IMAGE, jump_img=TEENAGER_PLAYER_JUMP_IMAGE,
+                  role="teenager")
 
 def YoungAdultPlayer():
-    return Player(PLAYER_START_X, width=250, height=250, jump_strength=-13.5,
-                  run1=YOUNG_ADULT_PLAYER_RUN1_IMAGE, run2=YOUNG_ADULT_PLAYER_RUN2_IMAGE, jump_img=YOUNG_ADULT_PLAYER_JUMP_IMAGE)
+    return Player(PLAYER_START_X, width=186.66, height=250, jump_strength=-13.5,
+                  run1=YOUNG_ADULT_PLAYER_RUN1_IMAGE, run2=YOUNG_ADULT_PLAYER_RUN2_IMAGE, jump_img=YOUNG_ADULT_PLAYER_JUMP_IMAGE,
+                  role="young_adult")

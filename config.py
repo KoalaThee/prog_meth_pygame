@@ -13,6 +13,13 @@ OVERLAY_SCREEN_IMAGE = "assets/images/overlay_screen.png"
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
+# HUD stat maximums
+STAT_MAX_HEALTH = 100
+STAT_MAX_HAPPINESS = 225
+STAT_MAX_INTELLIGENCE = 320
+STAT_MAX_ARTS = 180
+STAT_MAX_SOCIAL = 11
+
 # Ground
 GROUND_Y = 375
 

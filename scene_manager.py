@@ -5,6 +5,8 @@ from dataclasses import dataclass
 import pygame
 
 from config import WINDOW_WIDTH, WINDOW_HEIGHT
+from game_state import GameState
+from items import ItemManager, trim_duration_frames
 
 
 # ---------------------------------------------------------------------------
@@ -30,6 +32,7 @@ class SceneState:
     speed: float
     player_class: Callable | None = None
     terminal: bool = False
+    stage: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -54,15 +57,17 @@ class SceneManager:
     Query `current_state.name` at any time to know the active state.
     """
 
-    def __init__(self, screen: pygame.Surface, states: list[SceneState]):
+    def __init__(self, screen: pygame.Surface, states: list[SceneState], game_state: GameState):
         self.screen = screen
         self.states = states
+        self.game_state = game_state
 
         # ---- build flat sequence ----------------------------------------
         self.surf_paths: list[str] = []               # file path per pass
         self.surfs: list[pygame.Surface | None] = []  # loaded surface or None
         self.pass_speeds: list[float] = []
         self.milestones: dict[int, SceneState] = {}   # pass_idx → SceneState
+        self.stage_duration_frames: dict[str, int] = {}  # stage_name → total frames in stage
 
         global_pass = 0
         for state in states:
@@ -74,6 +79,12 @@ class SceneManager:
                 self.surf_paths.append(state.image_paths[j % len(state.image_paths)])
                 self.surfs.append(None)
                 self.pass_speeds.append(state.speed)
+
+            if state.stage is not None and state.speed > 0:
+                frames = int(state.passes * WINDOW_WIDTH / state.speed)
+                self.stage_duration_frames[state.stage] = (
+                    self.stage_duration_frames.get(state.stage, 0) + frames
+                )
 
             global_pass += state.passes
 
@@ -93,8 +104,22 @@ class SceneManager:
         if first:
             self._activate_player(first)
 
+        # ---- items -------------------------------------------------------
+        self.item_manager = ItemManager(self.game_state)
+        self.current_stage: str | None = None
+        if self.current_state.stage is not None:
+            self.current_stage = self.current_state.stage
+            self.item_manager.start_stage(
+                self.current_stage,
+                self._item_spawn_duration_frames(self.current_stage),
+            )
+
         # Preload the opening passes before the loop starts
         self._preload_ahead(0)
+
+    def _item_spawn_duration_frames(self, stage: str) -> int:
+        """Scroll duration for ``stage`` with item-stage trim applied (see ``items``)."""
+        return trim_duration_frames(stage, self.stage_duration_frames.get(stage, 0))
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -153,12 +178,20 @@ class SceneManager:
                 self.current_state = state
                 if state.player_class is not None:
                     self._activate_player(state)
+                if state.stage is not None and state.stage != self.current_stage:
+                    self.current_stage = state.stage
+                    self.item_manager.start_stage(
+                        self.current_stage,
+                        self._item_spawn_duration_frames(self.current_stage),
+                    )
                 if state.terminal:
                     self.scroll_x = p * WINDOW_WIDTH
+                    self.item_manager.flush()
                     self._done = True
                     break
 
         if not self._done and new_pass >= self.total_passes:
+            self.item_manager.flush()
             self._done = True
 
         self._preload_ahead(new_pass)
@@ -166,6 +199,8 @@ class SceneManager:
         if self.player:
             keys = pygame.key.get_pressed()
             self.player.update(keys)
+
+        self.item_manager.update(speed, self.player)
 
     def draw(self):
         self.screen.fill((0, 0, 0))
@@ -184,4 +219,5 @@ class SceneManager:
             if x < WINDOW_WIDTH:
                 self.screen.blit(surf, (x, 0))
 
+        self.item_manager.draw(self.screen)
         self.all_sprites.draw(self.screen)

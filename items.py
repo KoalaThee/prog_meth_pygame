@@ -93,7 +93,8 @@ SPAWN_BANDS: dict[str, str] = {
 def spawn_bottom_y_range(player=None) -> tuple[int, int]:
     """Return (min_midbottom_y, max_midbottom_y) for the active player."""
     if player is None:
-        return GROUND_Y - 180, SPAWN_BOTTOM_Y_MAX
+        y_min = max(SPAWN_MIDBOTTOM_Y_MIN_ON_SCREEN, GROUND_Y - 180)
+        return y_min, SPAWN_BOTTOM_Y_MAX
 
     h = int(round(player.DISPLAY_HEIGHT))
     raw_min = (DOUBLE_JUMP_FEET_Y - h) + ITEM_SIZE
@@ -104,7 +105,9 @@ def spawn_bottom_y_range(player=None) -> tuple[int, int]:
     elif policy == "by_reach":
         y_min = raw_min
     else:
-        y_min = max(SPAWN_MIDBOTTOM_Y_MIN_ON_SCREEN, raw_min)
+        y_min = raw_min
+
+    y_min = max(SPAWN_MIDBOTTOM_Y_MIN_ON_SCREEN, y_min)
 
     return min(y_min, SPAWN_BOTTOM_Y_MAX), SPAWN_BOTTOM_Y_MAX
 

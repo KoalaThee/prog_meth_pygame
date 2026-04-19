@@ -139,7 +139,15 @@ class SceneManager:
         return pygame.transform.smoothscale(img, (WINDOW_WIDTH, WINDOW_HEIGHT))
 
     def _activate_player(self, state: SceneState):
+        prev_player = self.player
         self.player = state.player_class()
+        
+        if prev_player is not None:
+            self.player.rect.midbottom = prev_player.rect.midbottom
+            self.player.vel_y = prev_player.vel_y
+            self.player.on_ground = prev_player.on_ground
+            self.player.jumps_remaining = prev_player.jumps_remaining
+
         self.all_sprites.empty()
         self.all_sprites.add(self.player)
 
@@ -157,8 +165,12 @@ class SceneManager:
     def is_game_over(self) -> bool:
         return self.obstacle_manager.is_game_over()
 
+    def consume_damage_flash(self) -> bool:
+        """Return True while a recent obstacle hit should flash the screen."""
+        return self.obstacle_manager.consume_damage_flash()
+
     def handle_event(self, event: pygame.event.Event):
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
             if self.player:
                 self.player.jump()
 

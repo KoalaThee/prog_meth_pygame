@@ -3,7 +3,13 @@ from enum import Enum, auto
 
 import pygame
 
-from config import WINDOW_WIDTH, WINDOW_HEIGHT, FPS, WINDOW_TITLE
+from config import (
+    WINDOW_WIDTH,
+    WINDOW_HEIGHT,
+    FPS,
+    WINDOW_TITLE,
+    DAMAGE_EFFECT_IMAGE,
+)
 from game_state import GameState
 from levels import all_level_states
 from scene_manager import SceneManager
@@ -46,6 +52,14 @@ class Game:
         self.pause_screen = PauseScreen(self.screen)
         self.game_over_screen = GameOverScreen(self.screen)
         self.stats_overlay = StatsOverlay(self.game_state)
+        self._damage_flash_surface: pygame.Surface | None = None
+        try:
+            img = pygame.image.load(DAMAGE_EFFECT_IMAGE).convert_alpha()
+            self._damage_flash_surface = pygame.transform.smoothscale(
+                img, (WINDOW_WIDTH, WINDOW_HEIGHT)
+            )
+        except (pygame.error, FileNotFoundError, OSError):
+            pass
 
         self.scene_manager = SceneManager(self.screen, all_level_states(), self.game_state)
 
@@ -87,6 +101,11 @@ class Game:
         else:
             self.scene_manager.draw()
             self.stats_overlay.draw(self.screen)
+            if (
+                self._damage_flash_surface is not None
+                and self.scene_manager.consume_damage_flash()
+            ):
+                self.screen.blit(self._damage_flash_surface, (0, 0))
             if self.mode is GameMode.PAUSED:
                 self.pause_screen.draw()
         pygame.display.flip()

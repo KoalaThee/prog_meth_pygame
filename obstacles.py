@@ -177,9 +177,6 @@ class JobRejectObstacle(ChasingObstacle):
 def _on_screen_min_midbottom_y(height: int) -> int:
     return height
 
-
-# Per-subtype physics tuning. Kept as module constants because they describe
-# *how a kind moves*, not per-instance data.
 JOB_REJECT_AMPLITUDE = 35.0
 JOB_REJECT_OMEGA = 0.06  # rad/frame
 BULLY_CHASE_SPEED = 3
@@ -305,6 +302,8 @@ OBSTACLE_STAGES: dict[str, tuple[str, ...]] = {
     "young_adult": ("job_reject",) * 8,
 }
 
+DAMAGE_FLASH_FRAMES = 12
+
 
 # ---------------------------------------------------------------------------
 # Manager
@@ -320,6 +319,7 @@ class ObstacleManager:
         self._schedule = SpawnSchedule([], [])
         self._frame = 0
         self._game_over = False
+        self._damage_flash_frames_left = 0
 
     # ---- lifecycle ----------------------------------------------------
 
@@ -335,6 +335,7 @@ class ObstacleManager:
             sprite.kill()
         self._schedule = SpawnSchedule([], [])
         self._frame = 0
+        self._damage_flash_frames_left = 0
 
     # ---- per-frame ----------------------------------------------------
 
@@ -359,6 +360,13 @@ class ObstacleManager:
     def is_game_over(self) -> bool:
         return self._game_over
 
+    def consume_damage_flash(self) -> bool:
+        """Return True while damage flash is active and consume one frame."""
+        if self._damage_flash_frames_left <= 0:
+            return False
+        self._damage_flash_frames_left -= 1
+        return True
+
     # ---- helpers ------------------------------------------------------
 
     def _resolve_collisions(self, player) -> None:
@@ -370,6 +378,7 @@ class ObstacleManager:
             if effects is None:
                 continue
             self.game_state.apply(effects)
+            self._damage_flash_frames_left = DAMAGE_FLASH_FRAMES
             if self.game_state.health <= 0:
                 self.game_state.health = 0
                 self._game_over = True

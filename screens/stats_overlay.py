@@ -64,9 +64,6 @@ class StatsOverlay:
         pygame.draw.rect(surface, self.OUTLINE, bg_rect, width=1, border_radius=3)
 
     def draw(self, surface: pygame.Surface) -> None:
-        if self._overlay is not None:
-            surface.blit(self._overlay, (0, 0))
-
         gs = self.game_state
         x = self.LEFT
         y = self.TOP
@@ -91,3 +88,7 @@ class StatsOverlay:
         text_surf = self._font.render(text, True, (30, 30, 40))
         text_rect = text_surf.get_rect(center=(cx, cy))
         surface.blit(text_surf, text_rect)
+
+        # Draw overlay art last so it appears in front of the bars/circle.
+        if self._overlay is not None:
+            surface.blit(self._overlay, (0, 0))

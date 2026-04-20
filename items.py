@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from typing import Protocol
 
 import pygame
 
 from config import FPS, GROUND_Y, WINDOW_WIDTH
 from game_state import GameState
+from scheduling import SpawnSchedule
 
 
 # ---------------------------------------------------------------------------
@@ -75,12 +75,6 @@ def trim_duration_frames(stage: str, base_frames: int) -> int:
 # Spawn geometry
 # ---------------------------------------------------------------------------
 
-class _PlayerLike(Protocol):
-    role: str
-    DISPLAY_HEIGHT: float
-    rect: pygame.Rect
-
-
 DOUBLE_JUMP_FEET_Y = 159
 
 SPAWN_X = WINDOW_WIDTH + ITEM_SIZE // 2
@@ -96,10 +90,11 @@ SPAWN_BANDS: dict[str, str] = {
 }
 
 
-def spawn_bottom_y_range(player: _PlayerLike | None) -> tuple[int, int]:
+def spawn_bottom_y_range(player=None) -> tuple[int, int]:
     """Return (min_midbottom_y, max_midbottom_y) for the active player."""
     if player is None:
-        return GROUND_Y - 180, SPAWN_BOTTOM_Y_MAX
+        y_min = max(SPAWN_MIDBOTTOM_Y_MIN_ON_SCREEN, GROUND_Y - 180)
+        return y_min, SPAWN_BOTTOM_Y_MAX
 
     h = int(round(player.DISPLAY_HEIGHT))
     raw_min = (DOUBLE_JUMP_FEET_Y - h) + ITEM_SIZE
@@ -110,7 +105,9 @@ def spawn_bottom_y_range(player: _PlayerLike | None) -> tuple[int, int]:
     elif policy == "by_reach":
         y_min = raw_min
     else:
-        y_min = max(SPAWN_MIDBOTTOM_Y_MIN_ON_SCREEN, raw_min)
+        y_min = raw_min
+
+    y_min = max(SPAWN_MIDBOTTOM_Y_MIN_ON_SCREEN, y_min)
 
     return min(y_min, SPAWN_BOTTOM_Y_MAX), SPAWN_BOTTOM_Y_MAX
 
@@ -142,37 +139,6 @@ class Item(pygame.sprite.Sprite):
 
 
 # ---------------------------------------------------------------------------
-# Spawn schedule
-# ---------------------------------------------------------------------------
-
-@dataclass
-class SpawnSchedule:
-    """Pre-computed (item, frame) plan for one stage."""
-    items: list[str]
-    spawn_frames: list[int]
-    next_index: int = 0
-
-    @classmethod
-    def for_stage(cls, stage: str, duration_frames: int) -> SpawnSchedule:
-        s = STAGES.get(stage)
-        if not s or duration_frames <= 0 or not s.items:
-            return cls([], [])
-        items = list(s.items)
-        random.shuffle(items)
-        n = len(items)
-        # Even spacing
-        frames = [int((k + 0.5) * duration_frames / n) for k in range(n)]
-        return cls(items, frames)
-
-    def pop_due(self, frame: int) -> list[str]:
-        out: list[str] = []
-        while self.next_index < len(self.spawn_frames) and frame >= self.spawn_frames[self.next_index]:
-            out.append(self.items[self.next_index])
-            self.next_index += 1
-        return out
-
-
-# ---------------------------------------------------------------------------
 # Manager
 # ---------------------------------------------------------------------------
 
@@ -194,8 +160,8 @@ class ItemManager:
 
         Existing on-screen items keep scrolling — only the schedule resets.
         """
-        self._schedule = SpawnSchedule.for_stage(stage, duration_frames)
         s = STAGES.get(stage)
+        self._schedule = SpawnSchedule.evenly_spaced(s.items if s else (), duration_frames)
         self._multipliers = dict(s.multipliers) if s else {}
         self._frame = 0
 
@@ -209,7 +175,7 @@ class ItemManager:
 
     # ---- per-frame ----------------------------------------------------
 
-    def update(self, scroll_dx: float, player: _PlayerLike | None) -> None:
+    def update(self, scroll_dx: float, player=None) -> None:
         for name in self._schedule.pop_due(self._frame):
             self._spawn(name, player)
 
@@ -231,7 +197,7 @@ class ItemManager:
 
     # ---- helpers ------------------------------------------------------
 
-    def _spawn(self, name: str, player: _PlayerLike | None) -> None:
+    def _spawn(self, name: str, player=None) -> None:
         defn = ITEMS[name]
         image = self._load(defn.image_path)
         effects = {stat: delta * self._multipliers.get(stat, 1)

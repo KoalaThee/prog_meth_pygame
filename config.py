@@ -8,6 +8,8 @@ WINDOW_TITLE = "Life is a Game"
 START_SCREEN_IMAGE = "assets/images/start_screen.png"
 PAUSE_SCREEN_IMAGE = "assets/images/pause_screen.png"
 OVERLAY_SCREEN_IMAGE = "assets/images/overlay_screen.png"
+GAME_OVER_SCREEN_IMAGE = "assets/images/game over_screen.png"
+DAMAGE_EFFECT_IMAGE = "assets/images/damage_effect.png"
 
 # Colors
 WHITE = (255, 255, 255)
@@ -47,7 +49,6 @@ BABY_BACKGROUND_TRANSITION_IMAGES = [
 ]
 
 # --- Toddler ---
-# toddler_player_run1 does not exist; reuse run2 for both frames
 TODDLER_PLAYER_RUN1_IMAGE = "assets/images/toddler_player_run1.png"
 TODDLER_PLAYER_RUN2_IMAGE = "assets/images/toddler_player_run2.png"
 TODDLER_PLAYER_JUMP_IMAGE = "assets/images/toddler_player_jump.png"
@@ -55,7 +56,7 @@ TODDLER_BACKGROUND_NORMAL_IMAGES = [
     "assets/images/toddler_background_normal1.png",
     "assets/images/toddler_background_normal2.png",
 ]
-TODDLER_BACKGROUND_TRANSITION_IMAGES = []  # no transition art for this stage
+TODDLER_BACKGROUND_TRANSITION_IMAGES = []
 
 # --- Teenager ---
 TEENAGER_PLAYER_RUN1_IMAGE = "assets/images/teenager_player_run1.png"

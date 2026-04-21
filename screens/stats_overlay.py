@@ -30,6 +30,10 @@ class StatsOverlay:
 
     BAR_BG = (220, 220, 220)
     OUTLINE = (40, 40, 40)
+    BRANCH_SCIENCE_TEXT = "Branch: Science"
+    BRANCH_ARTS_TEXT = "Branch: Arts"
+    BRANCH_TEXT_COLOR = (30, 30, 40)
+    HUD_TEXT_MARGIN_X = 8
 
     def __init__(self, game_state: GameState):
         self.game_state = game_state
@@ -63,7 +67,30 @@ class StatsOverlay:
 
         pygame.draw.rect(surface, self.OUTLINE, bg_rect, width=1, border_radius=3)
 
-    def draw(self, surface: pygame.Surface) -> None:
+    def _blit_clamped_text_under_circle(
+        self,
+        surface: pygame.Surface,
+        text: str,
+        y_top: int,
+        cx: int,
+    ) -> pygame.Rect:
+        """Draw text centered near the circle, clamped to stay fully on-screen."""
+        surf = self._font.render(text, True, self.BRANCH_TEXT_COLOR)
+        rect = surf.get_rect(midtop=(cx - 6, y_top))
+        if rect.left < self.HUD_TEXT_MARGIN_X:
+            rect.left = self.HUD_TEXT_MARGIN_X
+        if rect.right > WINDOW_WIDTH - self.HUD_TEXT_MARGIN_X:
+            rect.right = WINDOW_WIDTH - self.HUD_TEXT_MARGIN_X
+        surface.blit(surf, rect)
+        return rect
+
+    def draw(
+        self,
+        surface: pygame.Surface,
+        stage: str | None = None,
+        branch_choice: str | None = None,
+        faculty_choice: str | None = None,
+    ) -> None:
         gs = self.game_state
         x = self.LEFT
         y = self.TOP
@@ -88,6 +115,38 @@ class StatsOverlay:
         text_surf = self._font.render(text, True, (30, 30, 40))
         text_rect = text_surf.get_rect(center=(cx, cy))
         surface.blit(text_surf, text_rect)
+
+        # Show branch text only from high school stage onward.
+        if stage in {"teenager", "young_adult"}:
+            if branch_choice == "science":
+                branch_text = self.BRANCH_SCIENCE_TEXT
+            elif branch_choice == "arts":
+                branch_text = self.BRANCH_ARTS_TEXT
+            elif gs.intelligence > gs.arts:
+                branch_text = self.BRANCH_SCIENCE_TEXT
+            elif gs.arts > gs.intelligence:
+                branch_text = self.BRANCH_ARTS_TEXT
+            else:
+                branch_text = None
+
+            if branch_text is not None:
+                branch_rect = self._blit_clamped_text_under_circle(
+                    surface,
+                    branch_text,
+                    cy + self.CIRCLE_R + 6,
+                    cx,
+                )
+            else:
+                branch_rect = None
+
+            if stage == "young_adult" and faculty_choice and branch_rect is not None:
+                faculty_text = f"Faculty: {faculty_choice}"
+                self._blit_clamped_text_under_circle(
+                    surface,
+                    faculty_text,
+                    branch_rect.bottom + 2,
+                    cx,
+                )
 
         # Draw overlay art last so it appears in front of the bars/circle.
         if self._overlay is not None:

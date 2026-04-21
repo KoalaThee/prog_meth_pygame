@@ -10,6 +10,7 @@ PAUSE_SCREEN_IMAGE = "assets/images/pause_screen.png"
 OVERLAY_SCREEN_IMAGE = "assets/images/overlay_screen.png"
 GAME_OVER_SCREEN_IMAGE = "assets/images/game over_screen.png"
 DAMAGE_EFFECT_IMAGE = "assets/images/damage_effect.png"
+BRANCHING_SCREEN_IMAGE = "assets/images/branching_screen.png"
 
 # Colors
 WHITE = (255, 255, 255)
@@ -17,9 +18,9 @@ BLACK = (0, 0, 0)
 
 # HUD stat maximums
 STAT_MAX_HEALTH = 100
-STAT_MAX_HAPPINESS = 225
-STAT_MAX_INTELLIGENCE = 320
-STAT_MAX_ARTS = 180
+STAT_MAX_HAPPINESS = 200
+STAT_MAX_INTELLIGENCE = 260
+STAT_MAX_ARTS = 260
 STAT_MAX_SOCIAL = 11
 
 # Ground

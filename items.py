@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import pygame
 
@@ -36,9 +36,8 @@ ITEMS: dict[str, ItemDef] = {
 
 @dataclass(frozen=True)
 class StageDef:
-    """Items + multipliers + spawn-window trim for one life stage."""
+    """Items + spawn-window trim for one life stage."""
     items: tuple[str, ...]
-    multipliers: dict[str, int] = field(default_factory=dict)
     duration_trim_frames: int = 0
 
 
@@ -50,17 +49,18 @@ STAGES: dict[str, StageDef] = {
         items=("study",) * 4 + ("art",) * 4 + ("good_food",) * 4 + ("friend",) * 4,
     ),
     "teenager": StageDef(
-        items=("study",) * 6 + ("art",) * 3 + ("good_food",) * 3 + ("friend",) * 3
+        items=("study",) * 5 + ("art",) * 5 + ("good_food",) * 3 + ("friend",) * 3
               + ("exercise",) * 3 + ("bad_food",) * 2,
-        multipliers={"intelligence": 2, "arts": 2},  # high-school doubles study/art payoff
     ),
     "young_adult": StageDef(
-        items=("study",) * 8 + ("art",) * 4 + ("good_food",) * 3 + ("friend",) * 4
+        items=("study",) * 6 + ("art",) * 6 + ("good_food",) * 3 + ("friend",) * 4
               + ("exercise",) * 3 + ("bad_food",) * 2,
-        multipliers={"intelligence": 2, "arts": 2},  # university doubles study/art payoff
         duration_trim_frames=int(2 * FPS),  # spawn YA collectibles in a 2s-shorter window
     ),
 }
+
+BRANCH_MULTIPLIER_STAGES = {"teenager", "young_adult"}
+BRANCH_GAIN_MULTIPLIER = 2.0
 
 
 def trim_duration_frames(stage: str, base_frames: int) -> int:
@@ -150,7 +150,8 @@ class ItemManager:
         self.items: pygame.sprite.Group = pygame.sprite.Group()
         self._image_cache: dict[str, pygame.Surface] = {}
         self._schedule = SpawnSchedule([], [])
-        self._multipliers: dict[str, int] = {}
+        self._active_stage: str | None = None
+        self._branch_choice: str | None = None
         self._frame = 0
 
     # ---- lifecycle ----------------------------------------------------
@@ -162,7 +163,7 @@ class ItemManager:
         """
         s = STAGES.get(stage)
         self._schedule = SpawnSchedule.evenly_spaced(s.items if s else (), duration_frames)
-        self._multipliers = dict(s.multipliers) if s else {}
+        self._active_stage = stage if s else None
         self._frame = 0
 
     def flush(self) -> None:
@@ -170,8 +171,12 @@ class ItemManager:
         for sprite in list(self.items):
             sprite.kill()
         self._schedule = SpawnSchedule([], [])
-        self._multipliers = {}
+        self._active_stage = None
         self._frame = 0
+
+    def set_branch_choice(self, choice: str | None) -> None:
+        """Set the fixed branch choice used by branch-stage multipliers."""
+        self._branch_choice = choice
 
     # ---- per-frame ----------------------------------------------------
 
@@ -200,11 +205,31 @@ class ItemManager:
     def _spawn(self, name: str, player=None) -> None:
         defn = ITEMS[name]
         image = self._load(defn.image_path)
-        effects = {stat: delta * self._multipliers.get(stat, 1)
-                   for stat, delta in defn.effects.items()}
+        effects = {
+            stat: int(round(delta * self._effect_multiplier(stat)))
+            for stat, delta in defn.effects.items()
+        }
         y_lo, y_hi = spawn_bottom_y_range(player)
         midbottom = (SPAWN_X, random.randint(y_lo, y_hi))
         self.items.add(Item(name, image, midbottom, effects))
+
+    def _effect_multiplier(self, stat: str) -> float:
+        """Return per-stat multiplier for the current stage/branch rule."""
+        if self._active_stage not in BRANCH_MULTIPLIER_STAGES:
+            return 1.0
+        if stat != self._active_branch_stat():
+            return 1.0
+        return BRANCH_GAIN_MULTIPLIER
+
+    def _active_branch_stat(self) -> str:
+        """Return the active branch stat ('intelligence' or 'arts')."""
+        if self._branch_choice == "arts":
+            return "arts"
+        if self._branch_choice == "science":
+            return "intelligence"
+        if self.game_state.intelligence >= self.game_state.arts:
+            return "intelligence"
+        return "arts"
 
     def _load(self, path: str) -> pygame.Surface:
         cached = self._image_cache.get(path)

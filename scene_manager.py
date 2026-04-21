@@ -129,6 +129,10 @@ class SceneManager:
         self.item_manager.start_stage(stage, self._item_spawn_duration_frames(stage))
         self.obstacle_manager.start_stage(stage, duration)
 
+    def set_branch_choice(self, choice: str | None) -> None:
+        """Forward fixed branch choice to item multiplier logic."""
+        self.item_manager.set_branch_choice(choice)
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------

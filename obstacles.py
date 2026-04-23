@@ -32,7 +32,7 @@ from dataclasses import dataclass, field
 
 import pygame
 
-from config import GROUND_Y, WINDOW_WIDTH
+from config import GROUND_Y, WINDOW_WIDTH, SFX_HIT_OBSTACLE
 from game_state import GameState
 from scheduling import SpawnSchedule
 
@@ -320,6 +320,10 @@ class ObstacleManager:
         self._frame = 0
         self._game_over = False
         self._damage_flash_frames_left = 0
+        try:
+            self._sfx_hit: pygame.mixer.Sound | None = pygame.mixer.Sound(SFX_HIT_OBSTACLE)
+        except (pygame.error, FileNotFoundError, OSError):
+            self._sfx_hit = None
 
     # ---- lifecycle ----------------------------------------------------
 
@@ -378,6 +382,8 @@ class ObstacleManager:
             if effects is None:
                 continue
             self.game_state.apply(effects)
+            if self._sfx_hit is not None:
+                self._sfx_hit.play()
             self._damage_flash_frames_left = DAMAGE_FLASH_FRAMES
             if self.game_state.health <= 0:
                 self.game_state.health = 0

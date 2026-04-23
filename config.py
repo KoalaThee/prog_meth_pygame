@@ -86,3 +86,8 @@ YOUNG_ADULT_BACKGROUND_TRANSITION_IMAGES = [
     "assets/images/young_adult_background_transition.png",
 ]
 ENDING_IMAGE = "assets/images/ending_screen.png"
+
+# --- Audio ---
+BGM_MUSIC = "assets/sounds/bg_music.ogg"
+SFX_COLLECT_ITEM = "assets/sounds/collect_item.ogg"
+SFX_HIT_OBSTACLE = "assets/sounds/hit_obsticle.ogg"

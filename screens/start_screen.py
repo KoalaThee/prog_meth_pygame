@@ -1,20 +1,13 @@
 import pygame
 
 from config import WINDOW_WIDTH, WINDOW_HEIGHT, START_SCREEN_IMAGE
+from .util import load_background
 
 
 class StartScreen:
     def __init__(self, window: pygame.Surface):
         self.window = window
-        self._bg: pygame.Surface | None = None
-        self._load_background()
-
-    def _load_background(self) -> None:
-        try:
-            img = pygame.image.load(START_SCREEN_IMAGE).convert()
-            self._bg = pygame.transform.smoothscale(img, (WINDOW_WIDTH, WINDOW_HEIGHT))
-        except (pygame.error, FileNotFoundError, OSError):
-            self._bg = None
+        self._bg = load_background(START_SCREEN_IMAGE, (WINDOW_WIDTH, WINDOW_HEIGHT), alpha=False)
 
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Return True when Space is pressed to start."""

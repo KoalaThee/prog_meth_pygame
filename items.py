@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 import pygame
 
-from config import FPS, GROUND_Y, WINDOW_WIDTH
+from config import FPS, GROUND_Y, WINDOW_WIDTH, SFX_COLLECT_ITEM
 from game_state import GameState
 from scheduling import SpawnSchedule
 
@@ -153,6 +153,10 @@ class ItemManager:
         self._active_stage: str | None = None
         self._branch_choice: str | None = None
         self._frame = 0
+        try:
+            self._sfx_collect: pygame.mixer.Sound | None = pygame.mixer.Sound(SFX_COLLECT_ITEM)
+        except (pygame.error, FileNotFoundError, OSError):
+            self._sfx_collect = None
 
     # ---- lifecycle ----------------------------------------------------
 
@@ -193,6 +197,8 @@ class ItemManager:
             for item in list(self.items):
                 if player.rect.colliderect(item.rect):
                     self.game_state.apply(item.effects)
+                    if self._sfx_collect is not None:
+                        self._sfx_collect.play()
                     item.kill()
 
         self._frame += 1

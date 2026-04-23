@@ -2,6 +2,7 @@ import pygame
 import pygwidgets
 
 from config import WINDOW_WIDTH, WINDOW_HEIGHT, BRANCHING_SCREEN_IMAGE
+from .util import load_background
 
 
 class BranchScreen:
@@ -9,8 +10,7 @@ class BranchScreen:
 
     def __init__(self, window: pygame.Surface):
         self.window = window
-        self._bg: pygame.Surface | None = None
-        self._load_background()
+        self._bg = load_background(BRANCHING_SCREEN_IMAGE, (WINDOW_WIDTH, WINDOW_HEIGHT))
 
         btn_w, btn_h = 180, 44
         gap = 60
@@ -44,13 +44,6 @@ class BranchScreen:
             fontName=None,
             fontSize=22,
         )
-
-    def _load_background(self) -> None:
-        try:
-            img = pygame.image.load(BRANCHING_SCREEN_IMAGE).convert_alpha()
-            self._bg = pygame.transform.smoothscale(img, (WINDOW_WIDTH, WINDOW_HEIGHT))
-        except (pygame.error, FileNotFoundError, OSError):
-            self._bg = None
 
     def handle_event(self, event: pygame.event.Event) -> str | None:
         """Return chosen branch ('science'/'arts') when a button is clicked."""

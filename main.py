@@ -9,6 +9,7 @@ from config import (
     FPS,
     WINDOW_TITLE,
     DAMAGE_EFFECT_IMAGE,
+    BGM_MUSIC,
 )
 from branching import BranchManager
 from game_state import GameState
@@ -28,6 +29,7 @@ class GameMode(Enum):
 
 class Game:
     def __init__(self):
+        pygame.mixer.pre_init(44100, -16, 2, 512)
         pygame.init()
         pygame.display.set_caption(WINDOW_TITLE)
 
@@ -63,6 +65,12 @@ class Game:
             self._damage_flash_surface = pygame.transform.smoothscale(
                 img, (WINDOW_WIDTH, WINDOW_HEIGHT)
             )
+        except (pygame.error, FileNotFoundError, OSError):
+            pass
+
+        try:
+            pygame.mixer.music.load(BGM_MUSIC)
+            pygame.mixer.music.play(-1)  # -1 = loop forever
         except (pygame.error, FileNotFoundError, OSError):
             pass
 
@@ -102,8 +110,16 @@ class Game:
         self._ensure_branch_selected()
         if self.scene_manager.is_game_over():
             self.mode = GameMode.GAME_OVER
+            self._finish_music_loop()
         elif self.scene_manager.is_done():
             self.mode = GameMode.COMPLETE
+            self._finish_music_loop()
+
+    def _finish_music_loop(self) -> None:
+        """Let the current BGM playthrough finish without looping again."""
+        if pygame.mixer.music.get_busy():
+            pos_s = pygame.mixer.music.get_pos() / 1000.0
+            pygame.mixer.music.play(0, pos_s)
 
     def _ensure_branch_selected(self) -> None:
         """Lock branch before multiplier stages; show chooser only on ties."""

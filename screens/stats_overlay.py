@@ -10,6 +10,7 @@ from config import (
     STAT_MAX_ARTS,
 )
 from game_state import GameState
+from .util import load_background
 
 
 def _ratio(value: int, max_val: int) -> float:
@@ -37,16 +38,8 @@ class StatsOverlay:
 
     def __init__(self, game_state: GameState):
         self.game_state = game_state
-        self._overlay: pygame.Surface | None = None
-        self._load_overlay()
+        self._overlay = load_background(OVERLAY_SCREEN_IMAGE, (WINDOW_WIDTH, WINDOW_HEIGHT))
         self._font = pygame.font.Font(None, 18)
-
-    def _load_overlay(self) -> None:
-        try:
-            img = pygame.image.load(OVERLAY_SCREEN_IMAGE).convert_alpha()
-            self._overlay = pygame.transform.smoothscale(img, (WINDOW_WIDTH, WINDOW_HEIGHT))
-        except (pygame.error, FileNotFoundError, OSError):
-            self._overlay = None
 
     def _draw_fill_bar(
         self,

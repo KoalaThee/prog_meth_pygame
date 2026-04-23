@@ -2,13 +2,13 @@ import pygame
 import pygwidgets
 
 from config import WINDOW_WIDTH, WINDOW_HEIGHT, PAUSE_SCREEN_IMAGE
+from .util import load_background
 
 
 class PauseScreen:
     def __init__(self, window: pygame.Surface):
         self.window = window
-        self._bg: pygame.Surface | None = None
-        self._load_background()
+        self._bg = load_background(PAUSE_SCREEN_IMAGE, (WINDOW_WIDTH, WINDOW_HEIGHT))
 
         btn_w, btn_h = 180, 44
         x = (WINDOW_WIDTH - btn_w) // 2
@@ -26,13 +26,6 @@ class PauseScreen:
             fontName=None,
             fontSize=22,
         )
-
-    def _load_background(self) -> None:
-        try:
-            img = pygame.image.load(PAUSE_SCREEN_IMAGE).convert_alpha()
-            self._bg = pygame.transform.smoothscale(img, (WINDOW_WIDTH, WINDOW_HEIGHT))
-        except (pygame.error, FileNotFoundError, OSError):
-            self._bg = None
 
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Return True if Resume was clicked."""
